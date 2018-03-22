@@ -9,9 +9,9 @@
 package scala
 package xml
 
-import scala.collection.{ mutable, immutable, generic, SeqLike, AbstractSeq }
+import scala.collection.{ mutable, immutable, AbstractSeq }
 import mutable.{ Builder, ListBuffer }
-import generic.{ CanBuildFrom }
+import ScalaVersionSpecific.CBF
 import scala.language.implicitConversions
 
 /**
@@ -24,12 +24,15 @@ object NodeSeq {
   def fromSeq(s: collection.Seq[Node]): NodeSeq = new NodeSeq {
     def theSeq = s
   }
+
+  // ---
+  // For 2.11 / 2.12 only. Moving the implicit to a parent trait of `object NodeSeq` and keeping it
+  // in ScalaVersionSpecific doesn't work because the implicit becomes less specific, which leads to
+  // ambiguities.
   type Coll = NodeSeq
-  implicit def canBuildFrom: CanBuildFrom[Coll, Node, NodeSeq] =
-    new CanBuildFrom[Coll, Node, NodeSeq] {
-      def apply(from: Coll) = newBuilder
-      def apply() = newBuilder
-    }
+  implicit def canBuildFrom: CBF[Coll, Node, NodeSeq] = ScalaVersionSpecific.NodeSeqCBF
+  // ---
+
   def newBuilder: Builder[Node, NodeSeq] = new ListBuffer[Node] mapResult fromSeq
   implicit def seqToNodeSeq(s: collection.Seq[Node]): NodeSeq = fromSeq(s)
 }
@@ -40,11 +43,7 @@ object NodeSeq {
  *
  *  @author  Burak Emir
  */
-abstract class NodeSeq extends AbstractSeq[Node] with immutable.Seq[Node] with SeqLike[Node, NodeSeq] with Equality with Serializable {
-
-  /** Creates a list buffer as builder for this class */
-  override protected[this] def newBuilder = NodeSeq.newBuilder
-
+abstract class NodeSeq extends AbstractSeq[Node] with immutable.Seq[Node] with ScalaVersionSpecificNodeSeq with Equality with Serializable {
   def theSeq: collection.Seq[Node]
   def length = theSeq.length
   override def iterator = theSeq.iterator

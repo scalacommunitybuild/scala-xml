@@ -25,6 +25,15 @@ lazy val xml = crossProject.in(file("."))
     scalacOptions         ++= "-deprecation:false -feature -Xlint:-stars-align,-nullary-unit,_".split("\\s+").to[Seq],
     scalacOptions in Test  += "-Xxml:coalescing",
 
+    unmanagedSourceDirectories in Compile ++= {
+      (unmanagedSourceDirectories in Compile).value.map { dir =>
+        CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((2, 13)) => file(dir.getPath ++ "-2.13")
+          case _             => file(dir.getPath ++ "-2.11-2.12")
+        }
+      }
+    },
+
     apiMappings ++= Map(
       scalaInstance.value.libraryJar
         -> url(s"http://www.scala-lang.org/api/${scalaVersion.value}/")
