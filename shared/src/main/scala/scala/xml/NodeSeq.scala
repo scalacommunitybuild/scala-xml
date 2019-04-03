@@ -52,6 +52,8 @@ abstract class NodeSeq extends AbstractSeq[Node] with immutable.Seq[Node] with S
   def apply(i: Int): Node = theSeq(i)
   def apply(f: Node => Boolean): NodeSeq = filter(f)
 
+  override def empty: NodeSeq = NodeSeq.Empty
+
   def xml_sameElements[A](that: Iterable[A]): Boolean = {
     val these = this.iterator
     val those = that.iterator
